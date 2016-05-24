@@ -37,6 +37,7 @@
     <Content Include="static\fonts\glyphicons-halflings-regular.svg" />
     <Content Include="static\fonts\glyphicons-halflings-regular.ttf" />
     <Content Include="static\fonts\glyphicons-halflings-regular.woff" />
+    <Content Include="static\scripts\vendor\angular-cookies.js" />
     <Content Include="static\scripts\vendor\angular.min.js" />
     <Content Include="static\scripts\app.module.js" />
     <Content Include="static\scripts\vendor\bootstrap.js" />
@@ -56,6 +57,7 @@
     <Content Include="templates\test_accounts.html" />
     <Content Include="templates\test_locked_accounts.html" />
     <Content Include="templates\test_databases.html" />
+    <Content Include="web.config" />
     <None Include="static\scripts\vendor\jquery.validate-vsdoc.js" />
     <None Include="static\scripts\vendor\jquery-1.10.2.intellisense.js" />
     <Content Include="static\scripts\vendor\jquery-1.10.2.js" />

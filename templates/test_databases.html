@@ -26,15 +26,15 @@
             <div class="col-md-6">
                 <h4>Permissions</h4>
                 <div class="radio row">
-                    <label style="font-size:medium"><input type="radio" name="permradio" id="readonly" /><strong>Read-Only</strong></label>
+                    <label style="font-size:medium"><input type="radio" ng-model="rdoValue" value="read-only" /><strong>Read-Only</strong></label>
                     <p>Designed for Assigners/Cutters<br />Allows Viewing of Data and Running of Loop Makeups</p>
                 </div>
                 <div class="radio row">
-                    <label style="font-size:medium"><input type="radio" name="permradio" id="readwrite" /><strong>Read/Write</strong></label>
+                    <label style="font-size:medium"><input type="radio" ng-model="rdoValue" value="read-write" /><strong>Read/Write</strong></label>
                     <p>Designed for Engineers/Drafters<br />Allows Modification of Data and Work Order Creation</p>
                 </div>
                 <div class="radio row">
-                    <label style="font-size:medium"><input type="radio" name="permradio" id="editreadwrite" /><strong>Edit Read/Write</strong></label>
+                    <label style="font-size:medium"><input type="radio" ng-model="rdoValue" value="edit-read-write" /><strong>Edit Read/Write</strong></label>
                     <p>Designed for Regional Subject Matter Experts<br />Allows Create/Update/Delete of User Values and Exchanges Boundaries</p>
                 </div>
                 <hr />
@@ -73,7 +73,7 @@
         </div>
         <br />
         <div class="row" style="text-align:center">
-            <input type="submit" class="btn btn-success btn-lg"/>
+            <input type="submit" class="btn btn-success btn-lg" ng-click="getSelectedRdo()"/>
             <input type="reset" class="btn btn-danger btn-lg" />
         </div>
 

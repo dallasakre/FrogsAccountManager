@@ -10,6 +10,7 @@ function DatabaseCtrl($scope, $http, $cookies) {
     vm.loadDatabases = loadDatabases;
     vm.maxLength = 2048;
     vm.today = new Date();
+    var selectedDbs = [];
 
     function loadDatabases() {
         var objFrogsDb = $cookies.getObject('frogsdbs')
@@ -40,6 +41,22 @@ function DatabaseCtrl($scope, $http, $cookies) {
 //        $scope.selectedAll = vm.databases.every(function (row) {
 //            return row.Selected;
 //        }) 
-//    }
+    //    }
+
+    $scope.getSelectedDbs = function () {
+        angular.forEach(vm.databases, function (row) {
+            if (row.Selected) {
+                selectedDbs.push(row.database);
+            }
+        });
+        return selectedDbs;
+    }
+
+    $scope.getSelectedRdo = function () {
+        value = $scope.rdoValue;
+        console.log(value);
+        return value;
+    }
+
 };
 
