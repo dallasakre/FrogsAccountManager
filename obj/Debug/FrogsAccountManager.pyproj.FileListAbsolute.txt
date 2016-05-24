@@ -1,0 +1,13 @@
+c:\users\dja410\documents\visual studio 2013\Projects\FrogsAccountManager\FrogsAccountManager\bin\Microsoft.PythonTools.WebRole.dll
+c:\users\dja410\documents\visual studio 2013\Projects\FrogsAccountManager\FrogsAccountManager\obj\Debug\attach_server.py
+c:\users\dja410\documents\visual studio 2013\Projects\FrogsAccountManager\FrogsAccountManager\obj\Debug\visualstudio_py_debugger.py
+c:\users\dja410\documents\visual studio 2013\Projects\FrogsAccountManager\FrogsAccountManager\obj\Debug\visualstudio_py_repl.py
+c:\users\dja410\documents\visual studio 2013\Projects\FrogsAccountManager\FrogsAccountManager\obj\Debug\visualstudio_py_util.py
+c:\users\dja410\documents\visual studio 2013\Projects\FrogsAccountManager\FrogsAccountManager\obj\Debug\__init__.py
+c:\users\dja410\documents\visual studio 2013\Projects\FrogsAccountManager\FrogsAccountManager\obj\Debug\__main__.py
+c:\users\dja410\documents\visual studio 2013\Projects\FrogsAccountManager\FrogsAccountManager\bin\AzureSetup.cfg
+c:\users\dja410\documents\visual studio 2013\Projects\FrogsAccountManager\FrogsAccountManager\bin\Microsoft.PythonTools.AzureSetup.exe
+c:\users\dja410\documents\visual studio 2013\Projects\FrogsAccountManager\FrogsAccountManager\bin\Microsoft.PythonTools.AzureSetup.exe.config
+c:\users\dja410\documents\visual studio 2013\Projects\FrogsAccountManager\FrogsAccountManager\bin\wfastcgi.py
+c:\users\dja410\documents\visual studio 2013\Projects\FrogsAccountManager\FrogsAccountManager\obj\Debug\web.config
+c:\users\dja410\documents\visual studio 2013\Projects\FrogsAccountManager\FrogsAccountManager\obj\Debug\web.debug.config
