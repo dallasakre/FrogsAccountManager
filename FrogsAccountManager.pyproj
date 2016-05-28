@@ -33,6 +33,7 @@
     <Content Include="static\content\bootstrap.css" />
     <Content Include="static\content\bootstrap.min.css" />
     <Content Include="static\content\site.css" />
+    <Content Include="static\content\sweetalert.css" />
     <Content Include="static\fonts\glyphicons-halflings-regular.eot" />
     <Content Include="static\fonts\glyphicons-halflings-regular.svg" />
     <Content Include="static\fonts\glyphicons-halflings-regular.ttf" />
@@ -47,8 +48,10 @@
     <Content Include="static\scripts\app\databaserole.controller.js" />
     <Content Include="static\scripts\app\database.controller.js" />
     <Content Include="static\scripts\vendor\modernizr-2.6.2.js" />
+    <Content Include="static\scripts\vendor\ngSweetAlert.js" />
     <Content Include="static\scripts\vendor\respond.js" />
     <Content Include="static\scripts\vendor\respond.min.js" />
+    <Content Include="static\scripts\vendor\sweetalert.min.js" />
     <Content Include="templates\about.html" />
     <Content Include="templates\contact.html" />
     <Content Include="templates\index.html" />

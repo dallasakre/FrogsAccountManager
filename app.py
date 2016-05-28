@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, json
 import cx_Oracle
 from datetime import datetime
 from os import environ
@@ -68,7 +68,7 @@ def test_databases():
     return render_template(
         'test_databases.html',
         year=datetime.now().year,
-        message='Create multiple FROGS user accounts in multiple databases for a given Permission Level.'
+        message='Create or Modify FROGS User Accounts in Multiple Databases for a Given Permission Level.'
     )
 
 @app.route('/test_accounts')
@@ -115,9 +115,9 @@ def frogsdatasetsroles(database):
 
 @app.route('/api/v1/get-frogs-database', methods=['GET'])
 def frogsdatabases():
-    sql = 'SELECT distinct region, database FROM frogs_user.all_datasets_and_roles order by region, database'
+    sql = 'SELECT distinct region, database, dataset FROM frogs_user.all_datasets_and_roles order by region, database'
     data = runsql(sql)
-    entries = [dict(region=row[0], database=row[1]) for row in data]
+    entries = [dict(region=row[0], database=row[1], dataset=row[2]) for row in data]
     return jsonify(frogs_databases=entries)
 
 
@@ -175,6 +175,53 @@ def frogsaccount(database):
     return jsonify(frogs_users=all_users)
 
 
+@app.route('/api/v1/post-create-user', methods=['POST'])
+def createuser():
+    content = request.json
+    failurecounter = 0
+    successcounter = 0
+    #expiration_date = content['expiration']
+    permission_level = content['permission']
+    database_dataset = content['database_dataset']
+    usernames = content['users']
+    dicDbDs = {}
+
+    for val in database_dataset:
+        val = val.split('-')
+        db = val[0]
+        ds = val[1]
+        if not db in dicDbDs.keys():
+            aryDs = []
+            aryDs.append(ds)
+            dicDbDs[db] = aryDs
+        else:
+            aryDs = []
+            aryDs = dicDbDs[db]
+            aryDs.append(ds)
+            dicDbDs[db] = aryDs
+
+    failures = []
+    for database, datasets in dicDbDs.iteritems():
+        for username in usernames:
+            try:
+                result, oraerror = createuseraddrole(username, database, permission_level, datasets)
+                status = result[4]
+                message = result[5]
+                if not oraerror:
+                    if status != 'SUCCESS':
+                        failurecounter = failurecounter + 1
+                        failrecord = dict(username=username, database=database, status=status, message=message)
+                        failures.append(failrecord)
+                    else:
+                        successcounter = successcounter + 1
+                else:
+                    return jsonify(oracle_error=oraerror)
+            except Exception as ex:
+                return jsonify(python_error=ex.message)
+    response = dict(success_counter=successcounter,failure_counter=failurecounter,failure_details=failures)
+    return jsonify(response)
+
+
 def runsql(sql):
     cur.execute(sql)
     data = cur.fetchall()
@@ -184,6 +231,19 @@ def runsql(sql):
 def allfrogsdatabases():
     sql = "SELECT db_link from dba_db_links WHERE username = 'CADTEL_ADMIN_LOGIC6' AND db_link LIKE '%PRD'"
     return sql
+
+
+def createuseraddrole(user, db, role, datasets):
+    error = []
+    try:
+        oraArrayDatasets = cur.arrayvar(cx_Oracle.STRING, datasets)
+        oraStatus = cur.var(cx_Oracle.STRING)
+        oraMsg = cur.var(cx_Oracle.STRING)
+        results = cur.callproc("FROGS_ACCT_MGR.CREATE_FROGS_USER_ADD_ROLE", (user, db, role, oraArrayDatasets, oraStatus, oraMsg))
+        return results, error
+    except cx_Oracle.DatabaseError as ex:
+        error = ex.args
+    return results, error
 
 
 @app.errorhandler(InvalidUsage)

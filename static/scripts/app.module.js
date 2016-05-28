@@ -1,5 +1,5 @@
 ﻿var app = angular
-    .module('app', ['ngCookies']);
+    .module('app', ['ngCookies','hSweetAlert']);
 
 app.config(['$interpolateProvider', function ($interpolateProvider) {
     $interpolateProvider.startSymbol('{[');

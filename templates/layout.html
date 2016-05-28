@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }} - FROGS Account Manager</title>
     <link rel="stylesheet" type="text/css" href="/static/content/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="/static/content/sweetalert.css" />
     <link rel="stylesheet" type="text/css" href="/static/content/site.css" />
     <script src="/static/scripts/vendor/modernizr-2.6.2.js"></script>
     <script src="/static/scripts/vendor/jquery-1.10.2.js"></script>
@@ -12,6 +13,8 @@
     <script src="/static/scripts/vendor/respond.js"></script>
     <script src="/static/scripts/vendor/angular.min.js"></script>
     <script src="/static/scripts/vendor/angular-cookies.js"></script>
+    <script src="/static/scripts/vendor/sweetalert.min.js"></script>
+    <script src="/static/scripts/vendor/ngSweetAlert.js"></script>
     <script src="/static/scripts/app.module.js"></script>
 </head>
 
@@ -31,7 +34,7 @@
                     <!--<li><a href="{{ url_for('home') }}">Home</a></li>
                     <li><a href="{{ url_for('about') }}">About</a></li>
                     <li><a href="{{ url_for('contact') }}">Contact</a></li>-->
-                    <li><a href="{{ url_for('test_databases') }}">Create User</a></li>
+                    <li><a href="{{ url_for('test_databases') }}">Create/Update Users</a></li>
                     <li><a href="{{ url_for('test_database_role') }}">Database Roles</a></li>
                     <li><a href="{{ url_for('test_accounts') }}">Accounts</a></li>
                     <li><a href="{{ url_for('test_locked_accounts') }}">Locked Accounts</a></li>
