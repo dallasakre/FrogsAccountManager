@@ -31,75 +31,47 @@ class InvalidUsage(Exception):
         rv['message'] = self.message
         return rv
 
-@app.route('/home')
-def home():
-    """Renders the home page."""
-    return render_template(
-        'index.html',
-        title='Home Page',
-        year=datetime.now().year,
-    )
-
-@app.route('/contact')
-def contact():
-    """Renders the contact page."""
-    return render_template(
-        'contact.html',
-        title='Contact',
-        year=datetime.now().year,
-        message='Your contact page.'
-    )
-
-@app.route('/about')
-def about():
-    """Renders the about page."""
-    return render_template(
-        'about.html',
-        title='About',
-        year=datetime.now().year,
-        message='Your application description page.',
-        environment='Production'
-    )
 
 @app.route('/')
-@app.route('/test_databases')
-def test_databases():
-    """Renders the test page."""
+@app.route('/create_user')
+def create_user():
     return render_template(
-        'test_databases.html',
+        'create_user.html',
+        title='Create/Modify Users',
         year=datetime.now().year,
         message='Create or Modify FROGS User Accounts in Multiple Databases for a Given Permission Level.'
     )
 
-@app.route('/test_accounts')
-def test_accounts():
-    """Renders the test page."""
+@app.route('/lookup_accounts')
+def lookup_accounts():
     return render_template(
-        'test_accounts.html',
-        title='Test Accounts',
+        'lookup_accounts.html',
+        title='Lookup/Export Accounts',
         year=datetime.now().year,
-        message='Your application description page.'
+        message='Lookup and Export FROGS User Information.'
     )
 
-@app.route('/test_database_role')
-def test_database_role():
-    """Renders the test page."""
+@app.route('/remove_accounts')
+def remove_accounts():
     return render_template(
-        'database_role.html',
-        title='Test Database Role',
+        'remove_accounts.html',
+        title='Remove Accounts',
         year=datetime.now().year,
-        message='Your application description page.'
+        message='Remove users from FROGS Databases.'
     )
 
-@app.route('/test_locked_accounts')
-def test_locked_accounts():
-    """Renders the test page."""
+@app.route('/locked_accounts')
+def locked_accounts():
     return render_template(
         'locked_accounts.html',
-        title='Test Locked Accounts',
+        title='Locked Accounts',
         year=datetime.now().year,
-        message='Your application description page.'
+        message='Unlock FROGS User Accounts.'
     )
+
+@app.route('/pagination_controls')
+def pagination_controls():
+    return render_template('pagination_controls.html')
 
 @app.route('/api/v1/get-frogs-dataset-role/<database>', methods=['GET'])
 def frogsdatasetsroles(database):
@@ -112,14 +84,20 @@ def frogsdatasetsroles(database):
     entries = [dict(region=row[0], database=row[1], schema=row[2], dataset=row[3], role=row[4]) for row in data]
     return jsonify(frogs_datasets_roles=entries)
 
-
-@app.route('/api/v1/get-frogs-database', methods=['GET'])
-def frogsdatabases():
+@app.route('/api/v1/get-frogs-database-dataset', methods=['GET'])
+def frogsdatabasedataset():
     sql = 'SELECT distinct region, database, dataset FROM frogs_user.all_datasets_and_roles order by region, database'
     data = runsql(sql)
     entries = [dict(region=row[0], database=row[1], dataset=row[2]) for row in data]
     return jsonify(frogs_databases=entries)
 
+
+@app.route('/api/v1/get-frogs-database', methods=['GET'])
+def frogsdatabase():
+    sql = 'SELECT distinct region, database FROM frogs_user.all_datasets_and_roles order by region, database'
+    data = runsql(sql)
+    entries = [dict(region=row[0], database=row[1]) for row in data]
+    return jsonify(frogs_databases=entries)
 
 @app.route('/api/v1/get-frogs-locked-accounts', methods=['GET'])
 def frogslockedaccount():
@@ -128,51 +106,88 @@ def frogslockedaccount():
         sql = "SELECT '%s' as REGION, username, account_status, created, lock_date, expiry_date " \
               "FROM dba_users@%s " \
               "WHERE account_status != 'OPEN' " \
-              "AND username NOT IN ('OUTLN','WMSYS','ORACLE_OCM','DIP','APPQOSSYS','DBSNMP','PERFSTAT')" % (db, db)
+              "AND username NOT IN ('OUTLN','WMSYS','ORACLE_OCM','DIP','APPQOSSYS','DBSNMP','PERFSTAT'," \
+              "'ANONYMOUS','CTXSYS','EXFSYS','IGNITEREP','LBACSYS','MDDATA','MDSYS','MGMT_VIEW','OLAPSYS'," \
+              "'ORACLE_OCM','ORDPLUGINS','ORDSYS','OWBSYS','OUTLN','SI_INFORMTN_SCHEMA','SYS','SYSMAN'," \
+              "'SYSTEM','TSMSYS','VZDBMON','VZDBMONX','WK_TEST','WKPROXY','WKSYS','WMSYS','XDB')" % (db, db)
         return sql
 
-    all_locked_users = {}
+    locked_users = []
     sql = allfrogsdatabases()
     data = runsql(sql)
     for db in data:
-        local_locked_users = []
         db = db[0]
         sql = lockedusersql(db)
         data = runsql(sql)
         for row in data:
             record = dict(database=row[0], username=row[1], status=row[2], create_date=row[3],
                           lock_date=row[4], expire_date=row[5])
-            local_locked_users.append(record)
-        if local_locked_users:
-            all_locked_users[db] = local_locked_users
-    return jsonify(frogs_locked_accounts=all_locked_users)
+            locked_users.append(record)
+    return jsonify(frogs_locked_accounts=locked_users)
 
 
-@app.route('/api/v1/get-all-frogs-accounts/<database>', methods=['GET'])
-def frogsaccount(database):
+@app.route('/api/v1/post-all-frogs-accounts', methods=['POST'])
+def frogsaccount():
+    content = request.json
+    databases = content['databases']
+    dbInStatement = " AND database IN ('" + "','".join(map(str, databases)).upper() + "') "
+    users = content['users']
+    userInStatement = " AND grantee IN ('" + "','".join(map(str, users)).upper() + "') "
 
-    def usersql(sql):
-        sql = "SELECT '%s' as REGION, username, created, expiry_date " \
-              "FROM dba_users@%s " \
-              "WHERE username NOT IN ('OUTLN','WMSYS','ORACLE_OCM','DIP','APPQOSSYS','DBSNMP','PERFSTAT'," \
-              "'SYS','ORACLE','SYSTEM','SDE') AND username not like 'CADTEL%%'" % (db, db)
-        return sql
+    sql = "SELECT grantee, region, database, dataset, role " \
+          "FROM FROGS_ACCT_MGR_USER_ROLE " \
+          "WHERE grantee NOT IN ('OUTLN','WMSYS','ORACLE_OCM','DIP','APPQOSSYS','DBSNMP','PERFSTAT'," \
+          "'ANONYMOUS','CTXSYS','EXFSYS','IGNITEREP','LBACSYS','MDDATA','MDSYS','MGMT_VIEW','OLAPSYS'," \
+          "'ORACLE_OCM','ORDPLUGINS','ORDSYS','OWBSYS','OUTLN','SI_INFORMTN_SCHEMA','SYS','SYSMAN'," \
+          "'SYSTEM','TSMSYS','VZDBMON','VZDBMONX','WK_TEST','WKPROXY','WKSYS','WMSYS','XDB')" \
+          "AND grantee not like 'CADTEL%%'"
 
-    db_filter = database.upper().split(",")
-    sql = allfrogsdatabases()
-    data = runsql(sql)
-    all_users = []
-    for db in data:
-        db = db[0]
-        if not 'ALL' in db_filter:
-            if db not in db_filter:
-                continue
-        sql = usersql(db)
+    if databases:
+        sql = sql + dbInStatement
+
+    if users:
+        sql = sql + userInStatement
+    try:
         data = runsql(sql)
+        users = []
         for row in data:
-            record = dict(database=row[0], username=row[1], create_date=row[2], expire_date=row[3])
-            all_users.append(record)
-    return jsonify(frogs_users=all_users)
+            record = dict(username=row[0], region=row[1], database=row[2], dataset=row[3], role=row[4])
+            users.append(record)
+        return jsonify(frogs_users=users)
+    except Exception, e:
+        return jsonify(oracle_error=str(e))
+
+@app.route('/api/v1/post-unlock-frogs-user', methods=['POST'])
+def unlockuser():
+    failurecounter = 0
+    successcounter = 0
+    failures = []
+    content = request.json
+    locked_accounts = content['frogs_locked_accounts']
+    for row in locked_accounts:
+        user = row['account']
+        db = row['database']
+        try:
+            result, oraerror = unlockfrogsaccount(user, db)
+            status = result[2]
+            message = result[3]
+            if not oraerror:
+                if status != 'SUCCESS':
+                    failurecounter = failurecounter + 1
+                    failrecord = dict(username=user, database=db, status=status, message=message)
+                    failures.append(failrecord)
+                else:
+                    successcounter = successcounter + 1
+            else:
+                return jsonify(oracle_error=oraerror)
+        except Exception as ex:
+            failurecounter = failurecounter + 1
+            failrecord = dict(username=user, database=db, status="Oracle Error", message=str(ex))
+            failures.append(failrecord)
+
+    response = dict(success_counter=successcounter,failure_counter=failurecounter,failure_details=failures)
+    return jsonify(response)
+
 
 
 @app.route('/api/v1/post-create-user', methods=['POST'])
@@ -180,7 +195,6 @@ def createuser():
     content = request.json
     failurecounter = 0
     successcounter = 0
-    #expiration_date = content['expiration']
     permission_level = content['permission']
     database_dataset = content['database_dataset']
     usernames = content['users']
@@ -244,6 +258,20 @@ def createuseraddrole(user, db, role, datasets):
     except cx_Oracle.DatabaseError as ex:
         error = ex.args
     return results, error
+
+
+def unlockfrogsaccount(user, db):
+    error = []
+    try:
+        database = db
+        account = user
+        oraStatus = cur.var(cx_Oracle.STRING)
+        oraMsg = cur.var(cx_Oracle.STRING)
+        results = cur.callproc("FROGS_ACCT_MGR.UNLOCK_FROGS_USER", (account, database, oraStatus, oraMsg))
+        return results, error
+    except cx_Oracle.DatabaseError as ex:
+        error = ex.args
+    return error
 
 
 @app.errorhandler(InvalidUsage)

@@ -19,13 +19,13 @@ function CreateUserCtrl($scope, $http, $cookies, sweet) {
 
 
     function loadDatabases() {
-        var objFrogsDb = $cookies.getObject('frogsdbs');
+        var objFrogsDb = $cookies.getObject('frogsdbds');
         var tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         if (objFrogsDb == null || objFrogsDb == undefined) {
-            $http.get('/api/v1/get-frogs-database')
+            $http.get('/api/v1/get-frogs-database-dataset')
                 .then(function (response) {
-                    $cookies.putObject('frogsdbs', response.data.frogs_databases, {expires: tomorrow});
+                    $cookies.putObject('frogsdbds', response.data.frogs_databases, {expires: tomorrow});
                     objFrogsDb = response.data.frogs_databases;
                     vm.databases = objFrogsDb;
                 });
@@ -164,12 +164,15 @@ function CreateUserCtrl($scope, $http, $cookies, sweet) {
                     .success(function (data, status, headers) {
                         var successcount = data.success_counter;
                         var failcount = data.failure_counter;
-                        sweet.show("There were '" + successcount.toString() + "' Successes and '" + failcount.toString() + "' Failures.")
+                        // add logic to show different dialog if there are errors from PL/SQL
+                        sweet.show({
+                        title: "Process Completed!",
+                        text: "Successful: '" + successcount.toString() + "', Failed: '" + failcount.toString() + "'.",
+                        type: "info"
+                        });
                     })
-                    //.error(function (data, status, headers) {
-                    }
                 }
-            );
+            })
         } else {
             sweet.show("Please select at least one Database/Dataset value!");
         }
