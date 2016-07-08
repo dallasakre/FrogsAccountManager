@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <h3><strong>{{ message }}</strong></h3>
+
+    <hr>
+
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul class=flashes>
+            {% for message in messages %}
+              <p>{{ message }}</p>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    {% endwith %}
+
+        <div class="col-md-1 row"></div>
+        <div class="col-md-5 row">
+          <form method="POST" action="{{ url_for('login') }}" role="form">
+              <div style="padding: 4px 0px 4px 0px"><input class="form-control" type="text" name="username" value="" placeholder="Corp Id"></div>
+              <div style="padding: 4px 0px 4px 0px"><input class="form-control" type="password" name="password" value="" placeholder="Password"></div>
+              <div><input type="hidden" name="next" value="{{ next }}"></div>
+              <div style="padding: 4px 0px 4px 0px"><button type="submit" class="btn btn-success btn-lg">Submit</button></div>
+          </form>
+        </div>
+
+{% endblock %}

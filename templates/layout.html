@@ -3,19 +3,26 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - FROGS Account Manager</title>
-    <link rel="stylesheet" type="text/css" href="/static/content/bootstrap.min.css" />
+    <title>{{ title }}</title>
     <link rel="stylesheet" type="text/css" href="/static/content/sweetalert.css" />
+    <link rel="stylesheet" type="text/css" href="/static/content/loading-bar.css" />
+    <link rel="stylesheet prefetch" href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
+    <link rel="stylesheet prefetch" href="//maxcdn.bootstrapcdn.com/bootswatch/3.2.0/sandstone/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/static/content/site.css" />
+    <link rel="stylesheet" href="/static/content/ng-table.css">
     <script src="/static/scripts/vendor/modernizr-2.6.2.js"></script>
     <script src="/static/scripts/vendor/jquery-1.10.2.js"></script>
-    <script src="/static/scripts/vendor/bootstrap.js"></script>
+    <script src="/static/scripts/vendor/bootstrap.min.js"></script>
     <script src="/static/scripts/vendor/respond.js"></script>
     <script src="/static/scripts/vendor/angular.min.js"></script>
     <script src="/static/scripts/vendor/angular-cookies.js"></script>
     <script src="/static/scripts/vendor/sweetalert.min.js"></script>
     <script src="/static/scripts/vendor/ngSweetAlert.js"></script>
+    <script src="/static/scripts/vendor/loading-bar.min.js"></script>
+    <script src="/static/scripts/vendor/ng-table.js"></script>
     <script src="/static/scripts/app.module.js"></script>
+    <script src="/static/scripts/app/Interpolate.service.js"></script>
+
 </head>
 
 <body>
@@ -27,17 +34,20 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a href="/" class="navbar-brand">FROGS Account Manager</a>
+                <a class="navbar-brand">FROGS Account Manager</a>
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
-                    <!--<li><a href="{{ url_for('home') }}">Home</a></li>
-                    <li><a href="{{ url_for('about') }}">About</a></li>
-                    <li><a href="{{ url_for('contact') }}">Contact</a></li>-->
-                    <li><a href="{{ url_for('test_databases') }}">Create/Update Users</a></li>
-                    <li><a href="{{ url_for('test_database_role') }}">Database Roles</a></li>
-                    <li><a href="{{ url_for('test_accounts') }}">Accounts</a></li>
-                    <li><a href="{{ url_for('test_locked_accounts') }}">Locked Accounts</a></li>
+                    <li><a href="{{ url_for('lookup_accounts') }}">Lookup/Export Users</a></li>
+                    {% if not current_user.is_authenticated %}
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                    {% endif %}
+                    {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for('create_user') }}">Create/Update Users</a></li>
+                    <li><a href="{{ url_for('locked_accounts') }}">Locked Accounts</a></li>
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                    {% endif %}
+                    <!--<li><a href="{{ url_for('remove_accounts') }}">Remove Users</a></li>-->
                 </ul>
             </div>
         </div>
@@ -45,9 +55,9 @@
 
     <div class="container body-content">
         {% block content %}{% endblock %}
-        <hr />
-        <footer style="text-align:center">
-            <p>&copy; {{ year }} - FROGS Account Manager</p>
+        <hr style="margin-bottom:2px"/>
+        <footer class="col-md-12 row" style="text-align:center">
+            <p>&copy; Frontier Communications - {{ year }}</p>
         </footer>
     </div>
 

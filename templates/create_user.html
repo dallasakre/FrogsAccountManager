@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+    <h3><strong>{{ message }}</strong></h3>
+
+    <hr />
+    <div ng-app="app" ng-controller="CreateUserCtrl as vm" ng-init="vm.loadDatabases()" ng-cloak>
+        <form role="form">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>FROGS {{ environment }} Databases</h4>
+                    <table class="table table-responsive table-striped table-hover row" >
+                        <tr style="font-weight:bold">
+                            <th style="text-align:center" ng-model="selectedAll" ng-click="checkAll()"><input type="checkbox" ng-model="selectedAll" ng-click="checkAll()" /></th>
+                            <th style="font-size:medium">Region</th>
+                            <th style="font-size:medium">Database</th>
+                            <th style="font-size:medium">Dataset</th>
+                        </tr>
+                        <tr ng-repeat="row in ::vm.databases | orderBy: ['region','dataset']">
+                            <td style="text-align:center; padding:3px"><input type="checkbox" ng-model="row.Selected" ng-change="isAllChecked()" value="{[row.database]}" /></td>
+                            <td style="font-size:small; padding:3px">{[::row.region]}</td>
+                            <td style="font-size:small; padding:3px">{[::row.database]}</td>
+                            <td style="font-size:small; padding:3px">{[::row.dataset]}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h4>Permissions</h4>
+                    <div class="radio row">
+                        <label style="font-size:medium"><input type="radio" ng-model="rdoPerm" value="READ_ONLY" ng-checked="rdoReadOnlyChecked"/><strong>Read-Only</strong></label>
+                        <p>Designed for Assigners/Cutters<br />Allows Viewing of Data and Running of Loop Makeups</p>
+                    </div>
+                    <div class="radio row">
+                        <label style="font-size:medium"><input type="radio" ng-model="rdoPerm" value="READ_WRITE"/><strong>Read/Write</strong></label>
+                        <p>Designed for Engineers/Drafters<br />Allows Modification of Data and Work Order Creation</p>
+                    </div>
+                    <div class="radio row">
+                        <label style="font-size:medium"><input type="radio" ng-model="rdoPerm" value="EDIT_READ_WRITE"/><strong>Edit Read/Write</strong></label>
+                        <p>Designed for Regional Subject Matter Experts<br />Allows Create/Update/Delete of User Values and Exchanges Boundaries</p>
+                    </div>
+                    <hr />
+                    <!--<div class="row">
+                        <h4>Account Expiration</h4>
+                        <div class="col-md-4" ng-init="getTodaydDate()">
+                            <label ng-click="toggleDatePicker()" ng-checked="chkExpire">
+                                <input type="checkbox" name="expireCheckbox" ng-click="toggleDatePicker()" ng-model="rdoExpire" ng-checked="chkExpire" /> Never Expire
+                            </label>
+                        </div>
+                        <div class="col-md-3">
+                            <label>
+                                <input type="date" name="expireDatePicker" ng-disabled="dtePickerDisabled" min="{[vm.minDate | date:'yyyy-MM-dd']}" ng-model="dteSelected" />
+                            </label>
+                        </div>
+                    </div>
+                    <hr />-->
+                    <div class="row" style="margin-bottom:6px">
+                        <div >
+                            <h4>User Id's</h4>
+                            <textarea class="form-control input-lg" style="max-width:initial" id="useridinput" ng-model="useridvals" ng-maxlength="vm.maxLength"
+                                      size="4000" placeholder="Please enter CORP Id's separated by semi-colons. Example: abc123; zxy987"
+                                      ng-change="enableValidate()" ng-trim="false"></textarea>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6" style="text-align:left">
+                            <button type="button" class="btn btn-primary btn-sm text-left" ng-click="validateUsernames()" ng-disabled="vm.btnValidateDisabled">Validate</button>
+                        </div>
+                        <div class="col-md-6" style="text-align:right; font-size:small">
+                            {[ vm.maxLength - useridvals.length ]} Characters Remaining
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row" style="text-align:center">
+                <button type="button" class="btn btn-danger btn-lg" ng-click="resetEverything()">Reset</button>
+                <button type="button" class="btn btn-success btn-lg" ng-disabled="vm.btnSubmitDisabled" ng-click="postSubmit()">Submit</button>
+            </div>
+        </form>
+    </div>
+
+<script src="/static/scripts/app/createuser.controller.js"></script>
+
+
+    {% endblock %}

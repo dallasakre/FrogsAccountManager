@@ -1,2 +1,4 @@
 flask
-flask
+flask-login
+cx_Oracle
+ldap
