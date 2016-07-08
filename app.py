@@ -1,8 +1,13 @@
-from flask import Flask, render_template, jsonify, request, json
+from flask import Flask, render_template, jsonify, request, url_for, redirect, flash, g
+from flask_login import LoginManager, UserMixin, login_required, current_user, login_user, logout_user
+from functools import wraps
 import cx_Oracle
+import ldap
 from datetime import datetime
 from os import environ
 app = Flask(__name__)
+
+app.config['SECRET_KEY'] = '03{gUGLFnBD+5C=oS%WP0@GL6E54#W'
 
 app.config['ORACLE_SERVER'] = 'cadinfwsdpl15.corp.pvt'
 app.config['ORACLE_PORT'] = 1521
@@ -10,13 +15,78 @@ app.config['ORACLE_SID'] = 'CADUPRD'
 app.config['ORACLE_USER'] = 'frogs_admin'
 app.config['ORACLE_PWD'] = 'apple4you'
 app.config['DEBUG'] = 'TRUE'
+app.config['USER_GROUPS'] = ['ENG_SYS_APPS_POWERUSERS', 'ENG_SYS_APPS_ADMINS', 'ENG_SYS_APPS', 'NYRO_CITRIX_HELPDESK']
+
+
+
+login_manager = LoginManager()
+login_manager.session_protection = 'strong'
+users = {}
+login_manager.view = 'login'
+login_manager.init_app(app)
+
 
 tns_dsn = cx_Oracle.makedsn(app.config['ORACLE_SERVER'], app.config['ORACLE_PORT'], app.config['ORACLE_SID'])
 conn = cx_Oracle.connect(app.config['ORACLE_USER'], app.config['ORACLE_PWD'], tns_dsn)
 cur = conn.cursor()
 
 
-class InvalidUsage(Exception):
+# Declare an Object Model for the user, and make it comply with the
+# flask-login UserMixin mixin.
+class User(UserMixin):
+    def __init__(self, username, ldap_login_id, group_memebership, display_name):
+        self.ldap_login_id = ldap_login_id
+        self.username = username
+        self.group_memebership = group_memebership
+        self.display_name = display_name
+
+    def __repr__(self):
+        return self.username
+
+    def get_id(self):
+        return self.username
+
+    def is_anonymous(self):
+        return False
+
+
+# Declare a User Loader for Flask-Login.
+# Simply returns the User if it exists in our 'database', otherwise
+# returns None.
+@login_manager.user_loader
+def load_user(id):
+    if id in users:
+        return users[id]
+    return None
+
+
+# Declare The User Saver for Flask-Ldap3-Login
+# This method is called whenever a LDAPLoginForm() successfully validates.
+# Here you have to save the user, and return it so it can be used in the
+# login controller.
+
+def save_user(username, ldap_login_id, membership, display_name):
+    user = User(username, ldap_login_id, membership, display_name)
+    users[username] = user
+    login_user(user)
+    return user
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+@app.before_request
+def get_current_user():
+    g.user = current_user
+
+
+""""class InvalidUsage(Exception):
     status_code = 400
 
     def __init__(self, message, status_code=None, payload=None):
@@ -29,11 +99,76 @@ class InvalidUsage(Exception):
     def to_dict(self):
         rv = dict(self.payload or ())
         rv['message'] = self.message
-        return rv
+        return rv"""""
 
 
-@app.route('/')
+@app.route('/', methods=['GET','POST'])
+@app.route('/login', methods=['GET','POST'])
+def login():
+    next = request.args.get('next')
+    if request.method == 'GET':
+        if current_user.is_authenticated:
+            flash('You are already logged in.')
+            redirect(url_for('lookup_accounts'))
+        else:
+            return render_template('login.html',
+                                   title='Login',
+                                   year=datetime.now().year,
+                                   message='Login to the FROGS Account Manager.',
+                                   next=next)
+
+
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        ldap_login_id = username + '@ftr.com'
+        next = request.form['next']
+
+        try:
+            l = ldap.initialize("ldap://ldaphost.corp.pvt")
+            l.protocol_version = ldap.VERSION3
+            l.set_option(ldap.OPT_REFERRALS, 0)
+            l.simple_bind_s(ldap_login_id, password)
+        except ldap.INVALID_CREDENTIALS:
+            flash('Invalid username or password.  Please try again.', 'danger')
+            return redirect(url_for('login'))
+        try:
+            filter = "(&(objectClass=person)(samaccountname=%s))" % username
+            results = l.search_s("dc=corp,dc=pvt",ldap.SCOPE_SUBTREE,filter,['displayName','memberOf'])
+        except Exception, e:
+            search_error = str(e)
+            flash('An error has occurred! Error: ' + search_error, 'danger')
+            return redirect(url_for('login'))
+        try:
+            for entry in results:
+                if entry[0] is not None:
+                    groups = entry[1]['memberOf']
+                    display_name = entry[1]['displayName'][0]
+
+            for group in ['ENG_SYS_APPS_POWERUSERS', 'ENG_SYS_APPS_ADMINS', 'ENG_SYS_APPS', 'NYRO_CITRIX_HELPDESK']:
+                if any(group in s for s in groups):
+                    save_user(username, ldap_login_id, group, display_name)
+                    if not next == 'None':
+                        return redirect(next)
+                    else:
+                        return redirect(url_for('lookup_accounts'))
+            flash('You do not have proper permissions to view additional options.', 'danger')
+            return redirect(url_for('login'))
+        except Exception, e:
+            search_error = str(e)
+            flash('An error has occurred! Error: ' + search_error, 'danger')
+            return redirect(url_for('login'))
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+
 @app.route('/create_user')
+@login_required
 def create_user():
     return render_template(
         'create_user.html',
@@ -41,6 +176,7 @@ def create_user():
         year=datetime.now().year,
         message='Create or Modify FROGS User Accounts in Multiple Databases for a Given Permission Level.'
     )
+
 
 @app.route('/lookup_accounts')
 def lookup_accounts():
@@ -51,7 +187,9 @@ def lookup_accounts():
         message='Lookup and Export FROGS User Information.'
     )
 
+
 @app.route('/remove_accounts')
+@login_required
 def remove_accounts():
     return render_template(
         'remove_accounts.html',
@@ -60,7 +198,9 @@ def remove_accounts():
         message='Remove users from FROGS Databases.'
     )
 
+
 @app.route('/locked_accounts')
+@login_required
 def locked_accounts():
     return render_template(
         'locked_accounts.html',
@@ -69,9 +209,6 @@ def locked_accounts():
         message='Unlock FROGS User Accounts.'
     )
 
-@app.route('/pagination_controls')
-def pagination_controls():
-    return render_template('pagination_controls.html')
 
 @app.route('/api/v1/get-frogs-dataset-role/<database>', methods=['GET'])
 def frogsdatasetsroles(database):
@@ -83,6 +220,7 @@ def frogsdatasetsroles(database):
     data = runsql(sql)
     entries = [dict(region=row[0], database=row[1], schema=row[2], dataset=row[3], role=row[4]) for row in data]
     return jsonify(frogs_datasets_roles=entries)
+
 
 @app.route('/api/v1/get-frogs-database-dataset', methods=['GET'])
 def frogsdatabasedataset():
@@ -98,6 +236,7 @@ def frogsdatabase():
     data = runsql(sql)
     entries = [dict(region=row[0], database=row[1]) for row in data]
     return jsonify(frogs_databases=entries)
+
 
 @app.route('/api/v1/get-frogs-locked-accounts', methods=['GET'])
 def frogslockedaccount():
@@ -157,6 +296,7 @@ def frogsaccount():
     except Exception, e:
         return jsonify(oracle_error=str(e))
 
+
 @app.route('/api/v1/post-unlock-frogs-user', methods=['POST'])
 def unlockuser():
     failurecounter = 0
@@ -187,7 +327,6 @@ def unlockuser():
 
     response = dict(success_counter=successcounter,failure_counter=failurecounter,failure_details=failures)
     return jsonify(response)
-
 
 
 @app.route('/api/v1/post-create-user', methods=['POST'])
@@ -273,12 +412,12 @@ def unlockfrogsaccount(user, db):
         error = ex.args
     return error
 
-
+"""
 @app.errorhandler(InvalidUsage)
 def handle_invalid_usage(error):
     response = jsonify(error.to_dict())
     response.status_code = error.status_code
-    return response
+    return response"""
 
 
 if __name__ == '__main__':

@@ -34,13 +34,19 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a href="/" class="navbar-brand">FROGS Account Manager</a>
+                <a class="navbar-brand">FROGS Account Manager</a>
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
+                    <li><a href="{{ url_for('lookup_accounts') }}">Lookup/Export Users</a></li>
+                    {% if not current_user.is_authenticated %}
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                    {% endif %}
+                    {% if current_user.is_authenticated %}
                     <li><a href="{{ url_for('create_user') }}">Create/Update Users</a></li>
                     <li><a href="{{ url_for('locked_accounts') }}">Locked Accounts</a></li>
-                    <li><a href="{{ url_for('lookup_accounts') }}">Lookup/Export Users</a></li>
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                    {% endif %}
                     <!--<li><a href="{{ url_for('remove_accounts') }}">Remove Users</a></li>-->
                 </ul>
             </div>
@@ -51,7 +57,7 @@
         {% block content %}{% endblock %}
         <hr style="margin-bottom:2px"/>
         <footer class="col-md-12 row" style="text-align:center">
-            <p>&copy; {{ year }} - FROGS Account Manager</p>
+            <p>&copy; Frontier Communications - {{ year }}</p>
         </footer>
     </div>
 
